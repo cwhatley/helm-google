@@ -38,35 +38,44 @@
          (responseData (google-result-field 'responseData results))
          (records (google-result-field 'results responseData)))
     (mapcar (lambda (record)
-              (format "%s\n%s\n\%s"
-                      (google-result-field 'titleNoFormatting record)
-                      (replace-regexp-in-string
-                       "\n" ""
-                       (with-temp-buffer
-                         (insert (google-result-field 'content record))
-                         (html2text)
-                         (buffer-substring-no-properties (point-min) (point-max))))
-                      (google-result-field 'url record)))
+              (concat
+               (propertize
+                (google-result-field 'titleNoFormatting record)
+                'face 'font-lock-variable-name-face)
+               "\n"
+               (replace-regexp-in-string
+                "\n" ""
+                (with-temp-buffer
+                  (insert (google-result-field 'content record))
+                  (html2text)
+                  (buffer-substring-no-properties (point-min) (point-max))))
+               "\n"
+               (propertize
+                (google-result-field 'url record)
+                'face 'link)))
             records)))
+
+(defun helm-google-display-to-real (candidate)
+  (caddr (split-string candidate "[\n]+")))
 
 (defvar helm-source-google
   `((name . "Google")
     (init . (lambda () (require 'google)))
     (candidates . helm-google-search)
     (action ("Browse URL" . browse-url))
+    (display-to-real . helm-google-display-to-real)
     (multiline)
-    (delayed . 0.5)
+    (nohighlight)
+    (delayed . 0.3)
     (volatile)))
 
 (defun helm-google ()
   "Preconfigured `helm' : Google search."
   (interactive)
-  (let ((query (read-string "Google: " nil 'helm-google-input-history))
-        (google-referer "https://github.com/steckerhalter/helm-google"))
+  (let ((google-referer "https://github.com/steckerhalter/helm-google"))
     (helm :sources 'helm-source-google
           :prompt "Google: "
           :buffer "*helm google*"
-          :input query
           :history 'helm-google-input-history)))
 
 (provide 'helm-google)
