@@ -61,12 +61,12 @@
 (defvar helm-source-google
   `((name . "Google")
     (init . (lambda () (require 'google)))
-    (candidates . helm-google-search)
     (action ("Browse URL" . browse-url))
     (display-to-real . helm-google-display-to-real)
-    (multiline)
+    (candidates . helm-google-search)
+    (requires-pattern . 3)
     (nohighlight)
-    (delayed . 0.3)
+    (multiline)
     (volatile)))
 
 (defun helm-google ()
