@@ -69,6 +69,7 @@
     (multiline)
     (volatile)))
 
+;;;###autoload
 (defun helm-google ()
   "Preconfigured `helm' : Google search."
   (interactive)
