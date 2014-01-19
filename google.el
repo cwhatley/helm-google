@@ -82,7 +82,7 @@ Note that this is required by Google's terms of service."
     (prog1 (json-read)
       (kill-buffer buf))))
 
-(defun google-search (terms &optional start search-domain)
+(defun google-search (terms &optional start search-domain userip)
   "Search for TERMS.
 START, if non-null, is the search result number to start at.
 SEARCH-DOMAIN can be one of \"web\", \"local\", \"video\",
@@ -99,6 +99,8 @@ SEARCH-DOMAIN can be one of \"web\", \"local\", \"video\",
       (add-to-list 'args (cons "key" google-license-key)))
     (when start
       (add-to-list 'args (cons "start" start)))
+    (when userip
+      (add-to-list 'args (cons "userip" userip)))
     (google-response
      (url-retrieve-synchronously
       (format
