@@ -73,9 +73,14 @@
 (defun helm-google ()
   "Preconfigured `helm' : Google search."
   (interactive)
-  (let ((google-referer "https://github.com/steckerhalter/helm-google"))
+  (let ((google-referer "https://github.com/steckerhalter/helm-google")
+        (region (when (use-region-p)
+                  (buffer-substring-no-properties
+                   (region-beginning)
+                   (region-end)))))
     (helm :sources 'helm-source-google
           :prompt "Google: "
+          :input region
           :buffer "*helm google*"
           :history 'helm-google-input-history)))
 
