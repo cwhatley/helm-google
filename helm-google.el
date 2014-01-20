@@ -64,7 +64,7 @@
     (action ("Browse URL" . browse-url))
     (display-to-real . helm-google-display-to-real)
     (candidates . helm-google-search)
-    (requires-pattern . 3)
+    (requires-pattern)
     (nohighlight)
     (multiline)
     (volatile)))
@@ -77,7 +77,8 @@
         (region (when (use-region-p)
                   (buffer-substring-no-properties
                    (region-beginning)
-                   (region-end)))))
+                   (region-end))))
+        (helm-input-idle-delay 0.3))
     (helm :sources 'helm-source-google
           :prompt "Google: "
           :input region
