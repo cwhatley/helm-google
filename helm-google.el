@@ -34,7 +34,7 @@
 (defvar helm-google-input-history nil)
 
 (defun helm-google-search ()
-  (let* ((results (google-search helm-pattern nil nil userip))
+  (let* ((results (google-search helm-pattern))
          (responseData (google-result-field 'responseData results))
          (records (google-result-field 'results responseData)))
     (mapcar (lambda (record)
@@ -51,7 +51,7 @@
                   (buffer-substring-no-properties (point-min) (point-max))))
                "\n"
                (propertize
-                (google-result-field 'url record)
+                (url-unhex-string (google-result-field 'url record))
                 'face 'link)))
             records)))
 
@@ -73,13 +73,7 @@
 (defun helm-google ()
   "Preconfigured `helm' : Google search."
   (interactive)
-  (let ((userip (with-current-buffer (url-retrieve-synchronously "http://api.externalip.net/ip")
-                  (goto-char url-http-end-of-headers)
-                  (re-search-forward "[0-9]+")
-                  (prog1 (buffer-substring-no-properties (match-beginning 0) (point-max))
-                    (kill-buffer (current-buffer)))))
-        (helm-input-idle-delay 0.2)
-        (google-referer "https://github.com/steckerhalter/helm-google")
+  (let ((google-referer "https://github.com/steckerhalter/helm-google")
         (region (when (use-region-p)
                   (buffer-substring-no-properties
                    (region-beginning)
