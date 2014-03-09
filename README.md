@@ -6,7 +6,17 @@ Emacs Helm Interface for quick Google searches
 
 ![screen shot](https://raw.github.com/steckerhalter/helm-google/master/screenshot.png)
 
-## Installation with an El-Get Recipe
+## Installation
+
+### quelpa
+
+`quelpa` is at https://github.com/quelpa/quelpa
+
+```lisp
+(quelpa '(helm-google :fetcher github :repo "steckerhalter/helm-google"))
+```
+
+### el-get
 
 ```lisp
 (:name helm-google
