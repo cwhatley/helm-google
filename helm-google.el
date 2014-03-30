@@ -3,7 +3,7 @@
 ;; Copyright (C) 2014, Steckerhalter
 
 ;; Author: steckerhalter
-;; Package-Requires: ((helm "0"))
+;; Package-Requires: ((helm "0") (google "0"))
 ;; URL: https://github.com/steckerhalter/helm-google
 ;; Keywords: helm google search browse
 
