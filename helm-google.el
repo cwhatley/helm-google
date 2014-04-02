@@ -76,8 +76,9 @@
       (kill-buffer buf))))
 
 (defun helm-google--search (text)
-  (let* ((url (message (format (helm-google-url) (url-hexify-string text))))
-         (buf (url-retrieve-synchronously url t t))
+  (let* ((url (format (helm-google-url) (url-hexify-string text)))
+         (buf (let ((url-mime-charset-string "utf-8"))
+               (url-retrieve-synchronously url t)))
          (results (helm-google--parse buf)))
     results))
 
