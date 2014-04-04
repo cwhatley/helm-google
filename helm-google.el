@@ -29,12 +29,20 @@
 ;;; Code:
 
 (require 'helm)
+(require 'google)
 
 (defgroup helm-google '()
   "Customization group for `helm-google'."
   :link '(url-link "http://github.com/steckerhalter/helm-google")
   :group 'convenience
   :group 'comm)
+
+(defcustom helm-google-search-function 'helm-google-api-search
+  "The function that should be used to get the search results.
+Available functions are currently `helm-google-api-search' and
+`helm-google-html-search'."
+  :type 'symbol
+  :group 'helm-google)
 
 (defcustom helm-google-tld "com"
   "The TLD of the google url to be used (com, de, fr, co.uk etc.)."
@@ -86,7 +94,11 @@
          (results (helm-google--parse buf)))
     results))
 
-(defun helm-google-search ()
+(defun helm-google-html-search ()
+  "Get Google results by scraping the website.
+This is better than using the deprecated API. It gives more
+results but is tied to the html output so any change Google
+makes can break the results."
   (let* ((results (helm-google--search helm-pattern)))
     (mapcar (lambda (result)
               (concat
@@ -101,7 +113,36 @@
                 'face 'link)))
             results)))
 
+(defun helm-google-api-search ()
+  "Get Google results using the `google.el' library.
+Since the API this library uses is deprecated it is not very reliable."
+  (let* ((results (google-search helm-pattern))
+         (responseData (google-result-field 'responseData results))
+         (records (google-result-field 'results responseData)))
+    (mapcar (lambda (record)
+              (concat
+               (propertize
+                (google-result-field 'titleNoFormatting record)
+                'face 'font-lock-variable-name-face)
+               "\n"
+               (replace-regexp-in-string
+                "\n" ""
+                (with-temp-buffer
+                  (insert (google-result-field 'content record))
+                  (html2text)
+                  (buffer-substring-no-properties (point-min) (point-max))))
+               "\n"
+               (propertize
+                (url-unhex-string (google-result-field 'url record))
+                'face 'link)))
+            records)))
+
+(defun helm-google-search ()
+  "Invoke the search function set by `helm-google-search-function'."
+  (funcall helm-google-search-function))
+
 (defun helm-google-display-to-real (candidate)
+  "Retrieve the URL from the results for the action."
   (caddr (split-string candidate "[\n]+")))
 
 (defvar helm-source-google
