@@ -42,6 +42,7 @@
   :group 'helm-google)
 
 (defvar helm-google-input-history nil)
+(defvar helm-google-pending-query nil)
 
 (defun helm-google-url () "URL to google searches."
        (concat "https://www.google." helm-google-tld "/search?ion=1&q=%s"))
@@ -66,19 +67,22 @@
     (prog1 (let (results result)
              (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;" nil t)
                (setq result (plist-put result :url (match-string-no-properties 1)))
-               (re-search-forward "<b>\\(.*?\\)</b>" nil t)
-               (setq result (plist-put result :title (match-string-no-properties 1)))
+               (re-search-forward "\">\\(.*?\\)</a></h3>" nil t)
+               (setq result (plist-put result :title (helm-google--process-html (match-string-no-properties 1))))
                (re-search-forward "class=\"st\">\\([\0-\377[:nonascii:]]*?\\)</span>" nil t)
                (setq result (plist-put result :content (helm-google--process-html (match-string-no-properties 1))))
-               (add-to-list 'results result)
+               (add-to-list 'results result t)
                (setq result nil))
              results)
       (kill-buffer buf))))
 
+(defun helm-google--response-buffer-from-search (text &optional search-url)
+  (let ((url-mime-charset-string "utf-8")
+        (url (format (or search-url (helm-google-url)) (url-hexify-string text))))
+    (url-retrieve-synchronously url t)))
+
 (defun helm-google--search (text)
-  (let* ((url (format (helm-google-url) (url-hexify-string text)))
-         (buf (let ((url-mime-charset-string "utf-8"))
-               (url-retrieve-synchronously url t)))
+  (let* ((buf (helm-google--response-buffer-from-search text))
          (results (helm-google--parse buf)))
     results))
 
