@@ -86,14 +86,16 @@ Available functions are currently `helm-google-api-search' and
              results)
       (kill-buffer buf))))
 
-(defun helm-google--tree-assoc (key tree)
-  (when (consp tree)
-    (let ((x (car tree))
-          (y (cdr tree)))
-      (if (and (eql x key)
-               (string= (xml-get-attribute tree 'id) "ires"))
-          tree
-        (or (helm-google--tree-assoc key x) (helm-google--tree-assoc key y))))))
+(defun helm-google--tree-search (tree)
+  (pcase tree
+    (`(,x . ,y) (or (and (null y) nil)
+                    (and (eql x 'div)
+                         (string= (xml-get-attribute tree 'id) "ires")
+                         (pcase-let* ((`(_ _ . ,ol) tree)
+                                      (`(_ _ . ,items) (car ol)))
+                           items))
+                    (helm-google--tree-search x)
+                    (helm-google--tree-search y)))))
 
 (defun helm-google--parse-w/libxml (buf)
   (let* ((xml (with-current-buffer buf
@@ -101,9 +103,7 @@ Available functions are currently `helm-google-api-search' and
                 (prog1 (libxml-parse-html-region
                         (point-min) (point-max))
                   (kill-buffer))))
-         (items (xml-get-children
-                 (car (xml-node-children
-                       (helm-google--tree-assoc 'div xml))) 'li))
+         (items (helm-google--tree-search xml))
          (get-string (lambda (element)
                        (mapconcat (lambda (e)
                                     (if (listp e) (car (last e)) e))
