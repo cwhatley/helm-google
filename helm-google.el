@@ -63,28 +63,26 @@ Available functions are currently `helm-google-api-search' and
      (html2text)
      (buffer-substring-no-properties (point-min) (point-max)))))
 
-(defun helm-google--end-of-http-headers ()
-  (setq case-fold-search nil)
-  (save-excursion
-    (goto-char (point-min))
-    (when (re-search-forward "charset=utf-8" nil t)
-      (set-buffer-multibyte t)))
-  (goto-char url-http-end-of-headers))
+(defmacro helm-google--with-buffer (buf &rest body)
+  (declare (doc-string 3) (indent 2))
+  `(with-current-buffer ,buf
+     (set-buffer-multibyte t)
+     (goto-char url-http-end-of-headers)
+     (prog1 ,@body
+       (kill-buffer ,buf))))
 
 (defun helm-google--parse-w/regexp (buf)
-  (with-current-buffer buf
-    (helm-google--end-of-http-headers)
-    (prog1 (let (results result)
-             (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;" nil t)
-               (setq result (plist-put result :url (match-string-no-properties 1)))
-               (re-search-forward "\">\\(.*?\\)</a></h3>" nil t)
-               (setq result (plist-put result :title (helm-google--process-html (match-string-no-properties 1))))
-               (re-search-forward "class=\"st\">\\([\0-\377[:nonascii:]]*?\\)</span>" nil t)
-               (setq result (plist-put result :content (helm-google--process-html (match-string-no-properties 1))))
-               (add-to-list 'results result t)
-               (setq result nil))
-             results)
-      (kill-buffer buf))))
+  (helm-google--with-buffer buf
+      (let (results result)
+        (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;" nil t)
+          (setq result (plist-put result :url (match-string-no-properties 1)))
+          (re-search-forward "\">\\(.*?\\)</a></h3>" nil t)
+          (setq result (plist-put result :title (helm-google--process-html (match-string-no-properties 1))))
+          (re-search-forward "class=\"st\">\\([\0-\377[:nonascii:]]*?\\)</span>" nil t)
+          (setq result (plist-put result :content (helm-google--process-html (match-string-no-properties 1))))
+          (add-to-list 'results result t)
+          (setq result nil))
+        results)))
 
 (defun helm-google--tree-search (tree)
   (pcase tree
@@ -98,11 +96,9 @@ Available functions are currently `helm-google-api-search' and
                     (helm-google--tree-search y)))))
 
 (defun helm-google--parse-w/libxml (buf)
-  (let* ((xml (with-current-buffer buf
-                (helm-google--end-of-http-headers)
-                (prog1 (libxml-parse-html-region
-                        (point-min) (point-max))
-                  (kill-buffer))))
+  (let* ((xml (helm-google--with-buffer buf
+                  (libxml-parse-html-region
+                   (point-min) (point-max))))
          (items (helm-google--tree-search xml))
          (get-string (lambda (element)
                        (mapconcat (lambda (e)
