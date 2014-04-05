@@ -63,15 +63,17 @@ Available functions are currently `helm-google-api-search' and
      (html2text)
      (buffer-substring-no-properties (point-min) (point-max)))))
 
-(defun helm-google--parse (buf)
-  "Extract the search results from BUF."
+(defun helm-google--end-of-http-headers ()
+  (setq case-fold-search nil)
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "charset=utf-8" nil t)
+      (set-buffer-multibyte t)))
+  (goto-char url-http-end-of-headers))
+
+(defun helm-google--parse-w/regexp (buf)
   (with-current-buffer buf
-    (setq case-fold-search nil)
-    (save-excursion
-      (goto-char (point-min))
-      (when (re-search-forward "charset=utf-8" nil t)
-        (set-buffer-multibyte t)))
-    (goto-char url-http-end-of-headers)
+    (helm-google--end-of-http-headers)
     (prog1 (let (results result)
              (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;" nil t)
                (setq result (plist-put result :url (match-string-no-properties 1)))
@@ -83,6 +85,43 @@ Available functions are currently `helm-google-api-search' and
                (setq result nil))
              results)
       (kill-buffer buf))))
+
+(defun helm-google--tree-assoc (key tree)
+  (when (consp tree)
+    (let ((x (car tree))
+          (y (cdr tree)))
+      (if (and (eql x key)
+               (string= (xml-get-attribute tree 'id) "ires"))
+          tree
+        (or (helm-google--tree-assoc key x) (helm-google--tree-assoc key y))))))
+
+(defun helm-google--parse-w/libxml (buf)
+  (let* ((xml (with-current-buffer buf
+                (helm-google--end-of-http-headers)
+                (prog1 (libxml-parse-html-region
+                        (point-min) (point-max))
+                  (kill-buffer))))
+         (items (xml-get-children
+                 (car (xml-node-children
+                       (helm-google--tree-assoc 'div xml))) 'li))
+         (get-string (lambda (element)
+                       (mapconcat (lambda (e)
+                                    (if (listp e) (car (last e)) e))
+                                  element "")))
+         results)
+    (dolist (item items results)
+      (add-to-list 'results
+                   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
+                         :url (funcall get-string (cddr (assoc 'cite (assoc 'div (assoc 'div item)))))
+                         :content (helm-google--process-html
+                                   (funcall get-string (cddr (assoc 'span (assoc 'div item))))))
+                   t))))
+
+(defun helm-google--parse (buf)
+  "Extract the search results from BUF."
+  (if (fboundp 'libxml-parse-html-region)
+      (helm-google--parse-w/libxml buf)
+    (helm-google--parse-w/regexp buf)))
 
 (defun helm-google--response-buffer-from-search (text &optional search-url)
   (let ((url-mime-charset-string "utf-8")
