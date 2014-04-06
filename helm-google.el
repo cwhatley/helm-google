@@ -37,7 +37,7 @@
   :group 'convenience
   :group 'comm)
 
-(defcustom helm-google-search-function 'helm-google-api-search
+(defcustom helm-google-search-function 'helm-google-html-search
   "The function that should be used to get the search results.
 Available functions are currently `helm-google-api-search' and
 `helm-google-html-search'."
