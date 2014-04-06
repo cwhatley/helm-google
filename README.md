@@ -16,13 +16,15 @@ Emacs Helm Interface for quick Google searches
 (quelpa '(helm-google :fetcher github :repo "steckerhalter/helm-google"))
 ```
 
-### el-get
+### MELPA
 
-```lisp
-(:name helm-google
-       :type git
-       :url "https://github.com/steckerhalter/helm-google")
-```
+`helm-google` is on [MELPA](http://melpa.milkbox.net/) (see there for more info).
+
+## Configuration
+
+`helm-google` has two methods to search for results. One is a deprecated JSON API which still works but only gives a maximum of 4 results. The other method is via scraping the html of the website.
+
+You can configure the method via `M-x customize helm-google RET`. The default is html. If Google changes the markup this may break and you probably want to use the API.
 
 ## Usage
 
