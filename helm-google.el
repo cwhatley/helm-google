@@ -188,7 +188,7 @@ Since the API this library uses is deprecated it is not very reliable."
 
 (defun helm-google-display-to-real (candidate)
   "Retrieve the URL from the results for the action."
-  (caddr (split-string candidate "[\n]+")))
+  (car (last (split-string candidate "[\n]+"))))
 
 (defvar helm-source-google
   `((name . "Google")
