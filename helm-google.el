@@ -104,11 +104,13 @@ Available functions are currently `helm-google-api-search' and
                        (mapconcat (lambda (e)
                                     (if (listp e) (car (last e)) e))
                                   element "")))
+		 (fix-url (lambda (str)
+					(concat "https://www.google." helm-google-tld str)))
          results)
     (dolist (item items results)
-      (add-to-list 'results
-                   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
-                         :url (funcall get-string (cddr (assoc 'cite (assoc 'div (assoc 'div item)))))
+	  (add-to-list 'results
+				   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
+                         :url (funcall fix-url (cdr (assoc 'href (cadr (assoc 'a (assoc 'h3 item))))))
                          :content (helm-google--process-html
                                    (funcall get-string (cddr (assoc 'span (assoc 'div item))))))
                    t))))
