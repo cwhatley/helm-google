@@ -104,12 +104,13 @@ Available functions are currently `helm-google-api-search' and
                        (mapconcat (lambda (e)
                                     (if (listp e) (car (last e)) e))
                                   element "")))
-		 (fix-url (lambda (str)
-					(concat "https://www.google." helm-google-tld str)))
+         (fix-url (lambda (str)
+                    (concat "https://www.google." helm-google-tld str)))
          results)
     (dolist (item items results)
-	  (add-to-list 'results
-				   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
+      (add-to-list 'results
+                   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
+                         :cite (funcall get-string (cddr (assoc 'cite (assoc 'div (assoc 'div item)))))
                          :url (funcall fix-url (cdr (assoc 'href (cadr (assoc 'a (assoc 'h3 item))))))
                          :content (helm-google--process-html
                                    (funcall get-string (cddr (assoc 'span (assoc 'div item))))))
@@ -145,9 +146,16 @@ makes can break the results."
                "\n"
                (plist-get result :content)
                "\n"
+               (let ((cite (plist-get result :cite)))
+                 (when cite
+                   (concat
+                    (propertize
+                     cite
+                     'face 'link)
+                    "\n")))
                (propertize
                 (plist-get result :url)
-                'face 'link)))
+                'face 'glyphless-char)))
             results)))
 
 (defun helm-google-api-search ()
