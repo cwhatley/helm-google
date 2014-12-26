@@ -53,7 +53,7 @@ Available functions are currently `helm-google-api-search' and
 (defvar helm-google-pending-query nil)
 
 (defun helm-google-url () "URL to google searches."
-       (concat "https://www.google." helm-google-tld "/search?ion=1&ncr=1&q=%s"))
+       (concat "https://www.google." helm-google-tld "/search?ion=1&ie=UTF-8&oe=UTF-8&q=%s"))
 
 (defun helm-google--process-html (html)
   (replace-regexp-in-string
