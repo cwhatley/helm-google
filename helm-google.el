@@ -52,8 +52,16 @@ Available functions are currently `helm-google-api-search' and
 (defvar helm-google-input-history nil)
 (defvar helm-google-pending-query nil)
 
-(defun helm-google-url () "URL to google searches."
-       (concat "https://encrypted.google." helm-google-tld "/search?&ie=UTF-8&oe=UTF-8&q=%s"))
+(defun helm-google-url ()
+  "URL to google searches.
+If 'com' TLD is set use 'encrypted' subdomain to avoid country redirects."
+  (concat "https://"
+          (if (string= "com" helm-google-tld)
+              "encrypted"
+            "www")
+          ".google."
+          helm-google-tld
+          "/search?ie=UTF-8&oe=UTF-8&q=%s"))
 
 (defun helm-google--process-html (html)
   (replace-regexp-in-string
