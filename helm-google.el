@@ -49,6 +49,11 @@ Available functions are currently `helm-google-api-search' and
   :type 'string
   :group 'helm-google)
 
+(defcustom helm-google-use-regexp-parsing nil
+  "Force use of regexp html parsing even if libxml is available."
+  :type 'boolean
+  :group 'helm-google)
+
 (defvar helm-google-input-history nil)
 (defvar helm-google-pending-query nil)
 
@@ -126,9 +131,10 @@ If 'com' TLD is set use 'encrypted' subdomain to avoid country redirects."
 
 (defun helm-google--parse (buf)
   "Extract the search results from BUF."
-  (if (fboundp 'libxml-parse-html-region)
-      (helm-google--parse-w/libxml buf)
-    (helm-google--parse-w/regexp buf)))
+  (if (or helm-google-use-regexp-parsing
+          (not (fboundp 'libxml-parse-html-region)))
+      (helm-google--parse-w/regexp buf)
+    (helm-google--parse-w/libxml buf)))
 
 (defun helm-google--response-buffer-from-search (text &optional search-url)
   (let ((url-mime-charset-string "utf-8")
