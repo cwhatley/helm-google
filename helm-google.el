@@ -82,7 +82,7 @@ If 'com' TLD is set use 'encrypted' subdomain to avoid country redirects."
 (defun helm-google--parse-w/regexp (buf)
   (helm-google--with-buffer buf
       (let (results result)
-        (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;" nil t)
+        (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;sa" nil t)
           (setq result (plist-put result :url (match-string-no-properties 1)))
           (re-search-forward "\">\\(.*?\\)</a></h3>" nil t)
           (setq result (plist-put result :title (helm-google--process-html (match-string-no-properties 1))))
@@ -147,23 +147,23 @@ results but is tied to the html output so any change Google
 makes can break the results."
   (let* ((results (helm-google--search helm-pattern)))
     (mapcar (lambda (result)
-              (concat
-               (propertize
-                (plist-get result :title)
-                'face 'font-lock-variable-name-face)
-               "\n"
-               (plist-get result :content)
-               "\n"
-               (let ((cite (plist-get result :cite)))
+              (let ((cite (plist-get result :cite)))
+                (concat
+                 (propertize
+                  (plist-get result :title)
+                  'face 'font-lock-variable-name-face)
+                 "\n"
+                 (plist-get result :content)
+                 "\n"
                  (when cite
                    (concat
                     (propertize
                      cite
                      'face 'link)
-                    "\n")))
-               (propertize
-                (plist-get result :url)
-                'face 'glyphless-char)))
+                    "\n"))
+                 (propertize
+                  (plist-get result :url)
+                  'face (if cite 'glyphless-char 'link)))))
             results)))
 
 (defun helm-google-api-search ()
