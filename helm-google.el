@@ -52,8 +52,16 @@ Available functions are currently `helm-google-api-search' and
 (defvar helm-google-input-history nil)
 (defvar helm-google-pending-query nil)
 
-(defun helm-google-url () "URL to google searches."
-       (concat "https://www.google." helm-google-tld "/search?ion=1&q=%s"))
+(defun helm-google-url ()
+  "URL to google searches.
+If 'com' TLD is set use 'encrypted' subdomain to avoid country redirects."
+  (concat "https://"
+          (if (string= "com" helm-google-tld)
+              "encrypted"
+            "www")
+          ".google."
+          helm-google-tld
+          "/search?ie=UTF-8&oe=UTF-8&q=%s"))
 
 (defun helm-google--process-html (html)
   (replace-regexp-in-string
@@ -74,7 +82,7 @@ Available functions are currently `helm-google-api-search' and
 (defun helm-google--parse-w/regexp (buf)
   (helm-google--with-buffer buf
       (let (results result)
-        (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;" nil t)
+        (while (re-search-forward "class=\"r\"><a href=\"/url\\?q=\\(.*?\\)&amp;sa" nil t)
           (setq result (plist-put result :url (match-string-no-properties 1)))
           (re-search-forward "\">\\(.*?\\)</a></h3>" nil t)
           (setq result (plist-put result :title (helm-google--process-html (match-string-no-properties 1))))
@@ -104,12 +112,13 @@ Available functions are currently `helm-google-api-search' and
                        (mapconcat (lambda (e)
                                     (if (listp e) (car (last e)) e))
                                   element "")))
-		 (fix-url (lambda (str)
-					(concat "https://www.google." helm-google-tld str)))
+         (fix-url (lambda (str)
+                    (concat "https://www.google." helm-google-tld str)))
          results)
     (dolist (item items results)
-	  (add-to-list 'results
-				   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
+      (add-to-list 'results
+                   (list :title (funcall get-string (cddr (assoc 'a (assoc 'h3 item))))
+                         :cite (funcall get-string (cddr (assoc 'cite (assoc 'div (assoc 'div item)))))
                          :url (funcall fix-url (cdr (assoc 'href (cadr (assoc 'a (assoc 'h3 item))))))
                          :content (helm-google--process-html
                                    (funcall get-string (cddr (assoc 'span (assoc 'div item))))))
@@ -138,16 +147,23 @@ results but is tied to the html output so any change Google
 makes can break the results."
   (let* ((results (helm-google--search helm-pattern)))
     (mapcar (lambda (result)
-              (concat
-               (propertize
-                (plist-get result :title)
-                'face 'font-lock-variable-name-face)
-               "\n"
-               (plist-get result :content)
-               "\n"
-               (propertize
-                (plist-get result :url)
-                'face 'link)))
+              (let ((cite (plist-get result :cite)))
+                (concat
+                 (propertize
+                  (plist-get result :title)
+                  'face 'font-lock-variable-name-face)
+                 "\n"
+                 (plist-get result :content)
+                 "\n"
+                 (when cite
+                   (concat
+                    (propertize
+                     cite
+                     'face 'link)
+                    "\n"))
+                 (propertize
+                  (plist-get result :url)
+                  'face (if cite 'glyphless-char 'link)))))
             results)))
 
 (defun helm-google-api-search ()
@@ -180,7 +196,7 @@ Since the API this library uses is deprecated it is not very reliable."
 
 (defun helm-google-display-to-real (candidate)
   "Retrieve the URL from the results for the action."
-  (caddr (split-string candidate "[\n]+")))
+  (car (last (split-string candidate "[\n]+"))))
 
 (defvar helm-source-google
   `((name . "Google")
