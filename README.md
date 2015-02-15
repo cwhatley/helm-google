@@ -38,6 +38,12 @@ Or bind it to a key:
 (global-set-key (kbd "C-h C--") 'helm-google)
 ```
 
-If a region is selected it will take that as default input and search Google immediately. Otherwise it will start to search after you have entered a term. Pressing `RET` on a result calls the `browse-url` function which should open the URL in your external browser.
+If a region is selected it will take that as default input and search Google immediately. Otherwise it will start to search after you have entered a term. Pressing `RET` on a result calls the `browse-url` function which should open the URL in your web browser.
+
+If you want use the internal Emacs web browser (EWW, since Emacs 24.4) you can set it as your default browser like so:
+
+```lisp
+(setq browse-url-browser-function 'eww-browse-url)
+```
 
 If you want to keep the search open use `C-z` instead of `RET`.
