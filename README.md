@@ -4,7 +4,7 @@ Emacs Helm Interface for quick Google searches
 
 ## Screenshot
 
-![screen shot](https://raw.github.com/steckerhalter/helm-google/master/screenshot.png)
+![screen shot](./screenshot.png)
 
 ## Installation
 
